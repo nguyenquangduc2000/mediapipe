@@ -184,8 +184,11 @@ JNIEXPORT jobjectArray JNICALL PACKET_GETTER_METHOD(nativeGetProtoVector)(
   }
   const std::vector<const ::mediapipe::proto_ns::MessageLite*>& proto_vector =
       get_proto_vector.value();
+  // TODO: move to register natives.
+  jclass byte_array_cls = env->FindClass("[B");
   jobjectArray proto_array =
-      env->NewObjectArray(proto_vector.size(), env->FindClass("[B"), nullptr);
+      env->NewObjectArray(proto_vector.size(), byte_array_cls, nullptr);
+  env->DeleteLocalRef(byte_array_cls);
   for (int i = 0; i < proto_vector.size(); ++i) {
     const ::mediapipe::proto_ns::MessageLite* proto_message = proto_vector[i];
 
@@ -437,21 +440,30 @@ JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetGpuBufferName)(
   return static_cast<jint>(gpu_buffer.GetGlTextureBufferSharedPtr()->name());
 }
 
-JNIEXPORT jlong JNICALL PACKET_GETTER_METHOD(nativeGetGpuBuffer)(JNIEnv* env,
-                                                                 jobject thiz,
-                                                                 jlong packet) {
+JNIEXPORT jlong JNICALL PACKET_GETTER_METHOD(nativeGetGpuBuffer)(
+    JNIEnv* env, jobject thiz, jlong packet, jboolean wait_on_cpu) {
   mediapipe::Packet mediapipe_packet =
       mediapipe::android::Graph::GetPacketFromHandle(packet);
   mediapipe::GlTextureBufferSharedPtr ptr;
   if (mediapipe_packet.ValidateAsType<mediapipe::Image>().ok()) {
-    const mediapipe::Image& buffer = mediapipe_packet.Get<mediapipe::Image>();
-    ptr = buffer.GetGlTextureBufferSharedPtr();
+    auto mediapipe_graph =
+        mediapipe::android::Graph::GetContextFromHandle(packet);
+    auto gl_context = mediapipe_graph->GetGpuResources()->gl_context();
+    auto status =
+        gl_context->Run([gl_context, mediapipe_packet, &ptr]() -> absl::Status {
+          const mediapipe::Image& buffer =
+              mediapipe_packet.Get<mediapipe::Image>();
+          ptr = buffer.GetGlTextureBufferSharedPtr();
+          return absl::OkStatus();
+        });
   } else {
     const mediapipe::GpuBuffer& buffer =
         mediapipe_packet.Get<mediapipe::GpuBuffer>();
     ptr = buffer.GetGlTextureBufferSharedPtr();
   }
-  ptr->WaitUntilComplete();
+  if (wait_on_cpu) {
+    ptr->WaitUntilComplete();
+  }
   return reinterpret_cast<intptr_t>(
       new mediapipe::GlTextureBufferSharedPtr(ptr));
 }

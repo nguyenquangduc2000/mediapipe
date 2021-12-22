@@ -175,7 +175,9 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":resource_util_custom",
-        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/strings:str_format",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:singleton",
         "//mediapipe/framework/port:status",
@@ -184,7 +186,6 @@ cc_library(
         "@com_google_absl//absl/strings",
     ] + select({
         "//conditions:default": [
-            "//mediapipe/framework/deps:file_path",
             "@com_google_absl//absl/flags:flag",
         ],
         "//mediapipe:android": [
@@ -193,7 +194,6 @@ cc_library(
         ],
         "//mediapipe:ios": [],
         "//mediapipe:macos": [
-            "//mediapipe/framework/deps:file_path",
             "@com_google_absl//absl/flags:flag",
         ],
     }),
@@ -269,7 +269,6 @@ cc_library(
         ":time_series_util",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
-        "//mediapipe/framework/deps:message_matchers",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/port:gtest_main",
@@ -289,9 +288,58 @@ cc_test(
     deps = [
         ":time_series_util",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/deps:message_matchers",
         "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "@eigen_archive//:eigen3",
+    ],
+)
+
+cc_library(
+    name = "packet_test_util",
+    testonly = 1,
+    hdrs = ["packet_test_util.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:demangle",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/port:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "packet_test_util_test",
+    size = "small",
+    srcs = ["packet_test_util_test.cc"],
+    deps = [
+        ":packet_test_util",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:port",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/port:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "rectangle_util",
+    srcs = ["rectangle_util.cc"],
+    hdrs = ["rectangle_util.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:rectangle",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:statusor",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+cc_test(
+    name = "rectangle_util_test",
+    srcs = ["rectangle_util_test.cc"],
+    deps = [
+        ":rectangle_util",
+        "//mediapipe/framework/port:gtest_main",
     ],
 )

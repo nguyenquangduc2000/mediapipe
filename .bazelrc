@@ -66,6 +66,7 @@ build:android_arm64 --fat_apk_cpu=x86_64
 
 # iOS configs.
 build:ios --apple_platform_type=ios
+build:ios --copt=-fno-aligned-allocation
 
 build:ios_i386 --config=ios
 build:ios_i386 --cpu=ios_i386
