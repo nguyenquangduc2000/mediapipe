@@ -16,20 +16,22 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
 
-cc_binary(
-    name = "libmediapipe_jni.so",
-    linkshared = 1,
-    linkstatic = 1,
-    deps = [
-        "//mediapipe/graphs/hand_tracking:mobile_calculators",
-        "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
-    ],
+load(
+    "//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl",
+    "mediapipe_aar",
 )
 
 cc_library(
     name = "mediapipe_jni_lib",
     srcs = [":libmediapipe_jni.so"],
     alwayslink = 1,
+)
+
+mediapipe_aar(
+    name = "mp_multi_hand_aar",
+    calculators = [
+        "//mediapipe/graphs/hand_tracking:mobile_calculators",
+    ],
 )
 
 android_binary(
